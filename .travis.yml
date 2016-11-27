@@ -1,29 +1,56 @@
-sudo: false
-
-language: java
-
-install:
-  - mvn -B -U -f build-pom.xml dependency:go-offline test clean --quiet --fail-never -DskipTests=true
-
-script:
-  - mvn -B -U -f build-pom.xml verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
-
-jdk:
-  - oraclejdk7
-  - openjdk7
-  - oraclejdk8
-
+addons:
+  artifacts:
+    debug: true
+    paths:
+    - libs.zip
+    - build.zip
+    - testbuild.zip
+    - jacoco.exec
+    target_paths: 2a5f07c8-b4c8-4c00-8a42-d53e8f49535d
+after_success:
+- ' wget --content-disposition http://search.maven.org/remotecontent?filepath=org/jacoco/jacoco/0.7.7.201606060606/jacoco-0.7.7.201606060606.zip '
+- ' unzip -o jacoco-0.7.7.201606060606.zip  '
+- ' cd lib  '
+- ' mv * ../  '
+- ' cd ..  '
+- ' chmod a+x *  '
+- ' cd $PWD  '
+- ' rm  ''jacoco.exec'''
+- ' export JAVA_TOOL_OPTIONS=-javaagent:$PWD/jacocoagent.jar=destfile=$PWD/jacoco.exec,append=true  '
+- ' travis_wait 720 mvn  test -Dmaven.test.failure.ignore=true -Djacoco.skip=true
+  -Dcobertura.skip=true -Dmaven.clover.skip=true -Dmaven.javadoc.skip=true -Drat.skip=true
+  -Drat.ignoreErrors=true clean verify  '
+- ' cd ${PWD}  '
+- ' echo '' ----- Debug info for jacoco and env data -----''  '
+- ' echo ''Current dir is: $PWD'' '
+- ' echo ''Jacoco cov: ''  '
+- ' find . -name ''*.exec''  '
+- ' echo '' ----------------------------------------------'' '
+- ./df-build.sh
+before_install: []
+branches: ''
+cache:
+  directories:
+  - $HOME/.m2
 env:
   global:
-  - secure: "bWNSSMURwYC0oZWIMZRd7dy5+JdoyZ060d427TAqFRJmOkYtlR+dBbBggjeJmM0PEkQDzeBrWwln/Vq3lnRPv8czA7hSg/R33r3GzTyi1GZhjCYN2mPW8qp4qgqlloh78aaOODUNSJsOtQqPDJPmhLLfD6UCY0eq9zHhweIjYdw="
-  - secure: "s5V9d8MKl7ZHqCxuYLljLSD4sp9KLtYkk9hVxEPqCLAi4zA70WkX9h+GZI1gAOpcavomfrWcgSDT2ZReiuNpwx7OtczdS4zB+s6mo4F598iRs4bhSLiPT+Hzvx6BSwf1ZKZTYEhrUPGmKOp2T29AxMV7D0Q+P7n574ubvpUuZmA="
-  - secure: "T24JAd60zthkeLBmenvZn6+qI43uvfuLwVb70Ljhbc19XDYEZV4Zm/kaafsisP5+F6kV4GjFaT+NCq2sJlwvPSMMRvU1JJgmNVh8TmtswkC/PHKonkMkOsj2KmFP0RRSPdvQv2NrSguZUq8mg+2pvnPO0qoPg4VeIODPGtAxNb8="
-
-after_success:
-  - util/generate-latest-docs.sh
-  - util/publish-snapshot-on-commit.sh
-
-branches:
-  only:
-    - master
-    - /^release.*$/
+  - secure: bWNSSMURwYC0oZWIMZRd7dy5+JdoyZ060d427TAqFRJmOkYtlR+dBbBggjeJmM0PEkQDzeBrWwln/Vq3lnRPv8czA7hSg/R33r3GzTyi1GZhjCYN2mPW8qp4qgqlloh78aaOODUNSJsOtQqPDJPmhLLfD6UCY0eq9zHhweIjYdw=
+  - secure: s5V9d8MKl7ZHqCxuYLljLSD4sp9KLtYkk9hVxEPqCLAi4zA70WkX9h+GZI1gAOpcavomfrWcgSDT2ZReiuNpwx7OtczdS4zB+s6mo4F598iRs4bhSLiPT+Hzvx6BSwf1ZKZTYEhrUPGmKOp2T29AxMV7D0Q+P7n574ubvpUuZmA=
+  - secure: T24JAd60zthkeLBmenvZn6+qI43uvfuLwVb70Ljhbc19XDYEZV4Zm/kaafsisP5+F6kV4GjFaT+NCq2sJlwvPSMMRvU1JJgmNVh8TmtswkC/PHKonkMkOsj2KmFP0RRSPdvQv2NrSguZUq8mg+2pvnPO0qoPg4VeIODPGtAxNb8=
+install:
+- mvn -B -U -f build-pom.xml dependency:go-offline test clean --quiet --fail-never
+  -DskipTests=true
+jdk:
+- oraclejdk8
+language: java
+notifications:
+  webhooks:
+    on_failure: always
+    on_start: always
+    on_success: always
+    urls:
+    - http://insights-portal-insights-service-webserver-dev.public-swarm.devfactory.com/travisWebHookListener?build_id=2a5f07c8-b4c8-4c00-8a42-d53e8f49535d
+script:
+- mvn -B -U -f build-pom.xml verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
+sudo: false
+# Modified by Insights Service at 2016-11-27 19:41:40.286398
